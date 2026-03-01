@@ -1,3 +1,4 @@
+
 import torch
 from torch import nn
 
@@ -22,18 +23,15 @@ class RiNALMo(nn.Module):
         x = self.embedding(tokens)
         x = self.token_dropout(x, tokens)
 
-        if self.config.model.transformer.use_flash_attn:
-            representation, attn_weights = self.transformer(
-                x,
-                key_padding_mask=torch.logical_not(pad_mask) if pad_mask is not None else None,
-                need_attn_weights=need_attn_weights
-                )
-        else:
-            representation, attn_weights = self.transformer(x, key_padding_mask=pad_mask, need_attn_weights=need_attn_weights)
+        representation, attn_weights = self.transformer(
+            x,
+            key_padding_mask=pad_mask,
+            need_attn_weights=need_attn_weights
+        )
         x = self.lm_mask_head(representation)
 
         result = {"logits": x, "representation": representation}
         if need_attn_weights:
             result["attentions"] = torch.stack(attn_weights, dim=1)
-        
+
         return result
